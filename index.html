@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Presales Scoping Helper</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -690,6 +691,7 @@ details > .field, details > .row2 { margin-top: 12px; }
   var AI_MSG = { not_granted: 'Claude access was not allowed for this page. Allow it in the page permissions to use this feature.', sampling_disabled: 'Claude is not available for this account.', rate_limited: 'Too many requests or your usage limit was reached. Try again later.', session_expired: 'Your session expired. Sign in again.', invalid_json: 'Claude replied in a format the page could not read. Try again, or shorten the text.', refused: 'Claude declined to read that text.', empty_completion: 'Claude returned nothing. Try again with more detail.', upstream_error: 'The request was interrupted. Try again.', prompt_too_large: 'That text is too long. Paste a shorter excerpt.' };
 
   function runAi() {
+    if (!sampleFn) return;
     var text = $('notes').value.trim();
     var st = $('aiStatus');
     if (!text) { st.className = 'err'; st.textContent = 'Paste the client requirements first.'; return; }
