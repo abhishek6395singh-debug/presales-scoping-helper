@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Presales Scoping Helper</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: two-column workbench. Inputs on the left, a verdict strip then timeline, workstreams, levers, risks and assumptions on the right. Stacks to one column on phones. */
+:root {
+  --bg: #F1F4F5;
+  --surface: #FFFFFF;
+  --ink: #12232B;
+  --muted: #566871;
+  --line: #D3DBDF;
+  --accent: #0D5A6B;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DCEBEF;
+  --hyper: #8FA6AE;
+  --good: #19733F;
+  --good-soft: #DCF0E4;
+  --warn: #8F5A00;
+  --warn-soft: #F8EBC9;
+  --bad: #B02F29;
+  --bad-soft: #F8DCD9;
+  --info: #3D5560;
+  --info-soft: #E3EAED;
+  --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1A1F; --surface: #15252C; --ink: #E5EEF1; --muted: #93A7AF; --line: #2B3E46;
+    --accent: #5FC2D6; --accent-ink: #08181D; --accent-soft: #183841; --hyper: #55707A;
+    --good: #5FCB93; --good-soft: #143426; --warn: #E3B352; --warn-soft: #3A2B0E;
+    --bad: #F2877F; --bad-soft: #3D1D1A; --info: #A9BDC5; --info-soft: #1F333B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1A1F; --surface: #15252C; --ink: #E5EEF1; --muted: #93A7AF; --line: #2B3E46;
+  --accent: #5FC2D6; --accent-ink: #08181D; --accent-soft: #183841; --hyper: #55707A;
+  --good: #5FCB93; --good-soft: #143426; --warn: #E3B352; --warn-soft: #3A2B0E;
+  --bad: #F2877F; --bad-soft: #3D1D1A; --info: #A9BDC5; --info-soft: #1F333B;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 15px/1.5 var(--font-body);
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+h1, h2, h3, p, dl, dd, ul, ol, fieldset { margin: 0; padding: 0; }
+h1 { font: 700 clamp(1.7rem, 4.4vw, 2.5rem)/1.05 var(--font-display); font-stretch: 108%; letter-spacing: -0.015em; text-wrap: balance; }
+h2 { font: 650 1.05rem/1.25 var(--font-display); font-stretch: 100%; text-wrap: balance; }
+.eyebrow { font: 500 0.72rem/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.lede { color: var(--muted); max-width: 62ch; margin-top: 10px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 21.5rem) minmax(0, 1fr); gap: 24px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+@media (max-width: 880px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.hint { color: var(--muted); font-size: 0.82rem; }
+
+/* form */
+fieldset { border: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+legend { font: 500 0.72rem/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 0 10px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field > label, .field > .lab { font-size: 0.84rem; font-weight: 500; }
+.row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+input[type="number"], input[type="date"], select, textarea {
+  width: 100%; min-width: 0; height: 40px; padding: 0 10px; font: inherit; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+}
+textarea { height: auto; min-height: 7.5rem; padding: 10px; resize: vertical; line-height: 1.45; }
+input[type="number"] { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+select { appearance: auto; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg label { flex: 1; position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: block; text-align: center; padding: 9px 6px; font-size: 0.86rem; border-left: 1px solid var(--line); color: var(--muted); }
+.seg label:first-child span { border-left: 0; }
+.seg input:checked + span { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -3px; }
+.check { display: flex; gap: 10px; align-items: center; font-size: 0.92rem; min-height: 40px; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+details summary { cursor: pointer; font-size: 0.86rem; color: var(--accent); font-weight: 500; }
+details > .field, details > .row2 { margin-top: 12px; }
+
+.btn { font: 600 0.9rem var(--font-body); padding: 10px 14px; border-radius: 4px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; min-height: 40px; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: 0.55; cursor: progress; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* verdict */
+.verdict { --st: var(--info); --st-soft: var(--info-soft); background: var(--st-soft); border: 1px solid var(--line); border-radius: 6px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.verdict.good { --st: var(--good); --st-soft: var(--good-soft); }
+.verdict.warn { --st: var(--warn); --st-soft: var(--warn-soft); }
+.verdict.bad { --st: var(--bad); --st-soft: var(--bad-soft); }
+.v-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.v-label { font: 500 0.72rem/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.v-date { font: 700 clamp(1.9rem, 6vw, 2.8rem)/1.05 var(--font-display); font-stretch: 108%; letter-spacing: -0.015em; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.v-sub { margin-top: 6px; color: var(--ink); max-width: 46ch; }
+.v-status { max-width: 26rem; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.v-status p { font-size: 0.92rem; }
+.pill { display: inline-block; font: 600 0.72rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 9px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.good { color: var(--good); background: var(--good-soft); }
+.pill.warn { color: var(--warn); background: var(--warn-soft); }
+.pill.bad { color: var(--bad); background: var(--bad-soft); }
+.pill.info { color: var(--info); background: var(--info-soft); }
+.verdict .pill { background: var(--surface); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 12px; border-top: 1px solid var(--line); padding-top: 14px; }
+.facts dt { font: 500 0.7rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.facts dd { font: 600 1.25rem/1.2 var(--font-mono); font-variant-numeric: tabular-nums; margin-top: 6px; }
+.facts dd small { font: 400 0.78rem var(--font-body); color: var(--muted); }
+
+/* gantt */
+.gantt { --req: -10%; --gl: -10%; display: flex; flex-direction: column; gap: 6px; }
+.g-row { display: grid; grid-template-columns: minmax(0, 11.5rem) minmax(0, 1fr); gap: 12px; align-items: center; }
+.g-label { font-size: 0.84rem; line-height: 1.25; min-width: 0; }
+.g-label small { display: block; font: 400 0.7rem var(--font-mono); color: var(--muted); }
+.g-track { position: relative; height: 18px; background: var(--bg); border-radius: 3px; }
+.g-track::before, .g-track::after { content: ""; position: absolute; top: -3px; bottom: -3px; width: 0; }
+.g-track::before { left: var(--gl); border-left: 2px solid var(--accent); }
+.g-track::after { left: var(--req); border-left: 2px dashed var(--st-line, var(--muted)); }
+.g-bar { position: absolute; top: 3px; bottom: 3px; background: var(--accent); border-radius: 2px; min-width: 3px; }
+.g-bar.hyper { background: var(--hyper); }
+.g-axis { position: relative; height: 16px; }
+.g-axis span { position: absolute; transform: translateX(-50%); font: 400 0.68rem var(--font-mono); color: var(--muted); }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.78rem; color: var(--muted); }
+.legend i { display: inline-block; width: 0; height: 12px; vertical-align: -2px; margin-right: 6px; }
+.legend .l-gl { border-left: 2px solid var(--accent); }
+.legend .l-rq { border-left: 2px dashed var(--muted); }
+@media (max-width: 560px) {
+  .g-row { grid-template-columns: minmax(0, 1fr); gap: 3px; margin-bottom: 4px; }
+  .g-row.axis > .g-label { display: none; }
+  .g-label small { display: inline; margin-left: 8px; }
+}
+
+/* workstreams */
+.ws { display: flex; flex-direction: column; }
+.ws-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 14px; padding: 10px 0; border-top: 1px solid var(--line); }
+.ws-row:first-child { border-top: 0; padding-top: 0; }
+.ws-name { font-weight: 500; }
+.ws-note { color: var(--muted); font-size: 0.82rem; grid-column: 1; }
+.ws-pd { grid-column: 2; grid-row: 1; text-align: right; font: 500 0.95rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.ws-bar { grid-column: 1 / -1; height: 6px; background: var(--bg); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+.ws-bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.ws-row.sum { border-top: 2px solid var(--ink); }
+.ws-row.sum .ws-name, .ws-row.sum .ws-pd { font-weight: 600; }
+.ws-row.minor .ws-bar { display: none; }
+
+/* lists */
+.lever, .risk { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr); gap: 4px 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.lever:first-of-type, .risk:first-of-type { border-top: 0; padding-top: 0; }
+.lever h3, .risk h3 { font: 600 0.95rem/1.35 var(--font-body); }
+.lever p, .risk p { color: var(--muted); font-size: 0.88rem; margin-top: 3px; }
+.lever .tag, .risk .pill { align-self: start; justify-self: start; }
+.tag { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); padding-top: 3px; }
+@media (max-width: 560px) { .lever, .risk { grid-template-columns: minmax(0, 1fr); } }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 720px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.bul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.bul li { position: relative; padding-left: 16px; font-size: 0.9rem; }
+.bul li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 6px; height: 6px; background: var(--accent); border-radius: 1px; }
+.ev { color: var(--muted); font-size: 0.82rem; }
+.claude { border-style: dashed; }
+.note { font-size: 0.86rem; color: var(--muted); }
+.err { color: var(--bad); font-size: 0.88rem; }
+.srcbox { width: 100%; min-height: 10rem; font: 400 0.8rem/1.4 var(--font-mono); }
+.foot { color: var(--muted); font-size: 0.8rem; max-width: 80ch; }
+@media (prefers-reduced-motion: no-preference) { .g-bar, .ws-bar i { transition: width .25s ease, left .25s ease; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Presales · Financial services implementations</p>
+    <h1>Presales Scoping Helper</h1>
+    <p class="lede">Enter what the client has asked for. You get workstreams, effort, team size, a timeline checked against their go-live date, and the risks to raise before you commit.</p>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <form class="panel" id="form" autocomplete="off" onsubmit="return false">
+        <div class="panel-head">
+          <h2>Engagement</h2>
+          <span class="hint">Example values. Overwrite any field.</span>
+        </div>
+        <fieldset>
+          <legend>Client and dates</legend>
+          <div class="field"><label for="clientType">Client type</label>
+            <select id="clientType">
+              <option value="pm" selected>Private markets manager (PE, VC, RE)</option>
+              <option value="am">Asset manager</option>
+              <option value="fa">Fund administrator</option>
+              <option value="bk">Bank or custodian</option>
+              <option value="ins">Insurer or pension fund</option>
+            </select></div>
+          <div class="field"><label for="engagement">Engagement type</label>
+            <select id="engagement">
+              <option value="new" selected>New implementation</option>
+              <option value="migrate">Migration from a legacy platform</option>
+              <option value="addon">Add-on module or extension</option>
+            </select></div>
+          <div class="row2">
+            <div class="field"><label for="kickoff">Kick-off</label><input type="date" id="kickoff" value="2027-01-11"></div>
+            <div class="field"><label for="goLive">Client wants go-live</label><input type="date" id="goLive" value="2027-05-07"></div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Scope drivers</legend>
+          <div class="row2">
+            <div class="field"><label for="entities">Funds or entities</label><input type="number" id="entities" min="1" max="300" value="12" inputmode="numeric"></div>
+            <div class="field"><label for="integrations">Integrations</label><input type="number" id="integrations" min="0" max="25" value="4" inputmode="numeric"></div>
+          </div>
+          <div class="field"><span class="lab" id="vol-l">Data migration volume</span>
+            <div class="seg" role="radiogroup" aria-labelledby="vol-l">
+              <label><input type="radio" name="volume" id="vol-low" value="low"><span>Low</span></label>
+              <label><input type="radio" name="volume" id="vol-med" value="med" checked><span>Medium</span></label>
+              <label><input type="radio" name="volume" id="vol-high" value="high"><span>High</span></label>
+            </div></div>
+          <div class="row2">
+            <div class="field"><label for="dashboards">Custom dashboards</label><input type="number" id="dashboards" min="0" max="20" value="3" inputmode="numeric"></div>
+            <div class="field"><label for="uat">UAT rounds</label>
+              <select id="uat"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="security">Security review</label>
+              <select id="security"><option value="none">None</option><option value="std" selected>Standard</option><option value="heavy">Heavy</option></select></div>
+            <div class="field"><label for="hyper">Hypercare (weeks)</label><input type="number" id="hyper" min="0" max="12" value="4" inputmode="numeric"></div>
+          </div>
+          <label class="check" for="cloud"><input type="checkbox" id="cloud"> Includes a cloud migration</label>
+        </fieldset>
+        <fieldset>
+          <legend>Client readiness</legend>
+          <div class="field"><span class="lab" id="rdy-l">Decision speed and SME availability</span>
+            <div class="seg" role="radiogroup" aria-labelledby="rdy-l">
+              <label><input type="radio" name="readiness" id="rdy-high" value="high"><span>High</span></label>
+              <label><input type="radio" name="readiness" id="rdy-med" value="med" checked><span>Medium</span></label>
+              <label><input type="radio" name="readiness" id="rdy-low" value="low"><span>Low</span></label>
+            </div></div>
+        </fieldset>
+        <details>
+          <summary>Tune the model</summary>
+          <div class="row2">
+            <div class="field"><label for="alloc">Team allocation %</label><input type="number" id="alloc" min="30" max="100" value="60" inputmode="numeric"></div>
+            <div class="field"><label for="cont">Contingency %</label><input type="number" id="cont" min="0" max="40" value="15" inputmode="numeric"></div>
+          </div>
+        </details>
+      </form>
+
+      <section class="panel" id="ai-in" hidden>
+        <div class="panel-head"><h2>Read the requirements</h2></div>
+        <p class="note">Paste RFP text, call notes or an email thread. Claude fills in the drivers it can support from the text and lists risks and questions specific to it.</p>
+        <div class="field"><label for="notes">Client requirements</label>
+          <textarea id="notes" placeholder="Example: We run 14 funds on spreadsheets today. We need monthly investor reporting, feeds from two custodians and an admin, and a go-live before the June close."></textarea></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="aiGo">Analyse with Claude</button>
+          <button class="btn ghost" type="button" id="aiStop" hidden>Stop</button>
+        </div>
+        <p class="note" id="aiStatus" role="status"></p>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="verdict" id="verdict" aria-live="polite"></section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Timeline</h2><span class="hint mono" id="tl-hint"></span></div>
+        <div class="gantt" id="gantt"></div>
+        <div class="legend"><span><i class="l-gl"></i>Scoped go-live</span><span><i class="l-rq"></i>Client's requested date</span></div>
+      </section>
+
+      <section class="panel" id="levers-p" hidden>
+        <div class="panel-head"><h2 id="levers-h">Ways to close the gap</h2></div>
+        <div id="levers"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Effort by workstream</h2><span class="hint">Person-days, 8 hours each</span></div>
+        <div class="ws" id="ws"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Risks to raise</h2><span class="hint">Sorted by severity</span></div>
+        <div id="risks"></div>
+      </section>
+
+      <div class="two">
+        <section class="panel"><h2>Assumptions to state in the proposal</h2><ul class="bul" id="assump"></ul></section>
+        <section class="panel"><h2>Questions to ask the client</h2><ul class="bul" id="questions"></ul></section>
+      </div>
+
+      <section class="panel claude" id="ai-out" hidden></section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Take it with you</h2></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="copyBtn">Copy summary</button>
+          <span class="note" id="copyMsg" role="status"></span>
+        </div>
+        <textarea class="srcbox" id="srcbox" readonly hidden aria-label="Summary text"></textarea>
+      </section>
+
+      <p class="foot">Indicative sizing from rule-of-thumb rates, in calendar weeks with no public holidays or client freeze periods. Check the rates against your closed engagements before quoting a price.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  // MODEL-START
+  var CLIENTS = {
+    pm: { label: 'Private markets manager', m: 1.1 },
+    am: { label: 'Asset manager', m: 1.0 },
+    fa: { label: 'Fund administrator', m: 1.05 },
+    bk: { label: 'Bank or custodian', m: 1.0 },
+    ins: { label: 'Insurer or pension fund', m: 1.0 }
+  };
+  var ENG = { new: { label: 'New implementation', m: 1.0 }, migrate: { label: 'Migration from a legacy platform', m: 1.15 }, addon: { label: 'Add-on module', m: 0.6 } };
+  var READY = { high: { label: 'High', m: 0.9 }, med: { label: 'Medium', m: 1.0 }, low: { label: 'Low', m: 1.2 } };
+  var VOLTXT = { low: 'Low', med: 'Medium', high: 'High' };
+  var DAY = 864e5;
+
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+  function parseDate(s) { if (!/^\d{4}-\d{2}-\d{2}$/.test(s || '')) return null; var d = new Date(s + 'T00:00:00Z'); return isNaN(d) ? null : d; }
+  function addDays(d, n) { return new Date(d.getTime() + n * DAY); }
+  function fmtDate(d) { return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : 'not set'; }
+  function sum(a) { var t = 0; for (var i = 0; i < a.length; i++) t += a[i]; return t; }
+
+  function compute(p) {
+    var mult = ENG[p.engagement].m * READY[p.readiness].m * CLIENTS[p.clientType].m;
+    var vol = { low: 15, med: 30, high: 55 }[p.volume];
+    var sec = { none: 0, std: 6, heavy: 14 }[p.security];
+    var base = [
+      ['design', 'Requirements and solution design', 12 + p.integrations * 1.5 + p.entities * 0.5, 'Workshops, data mapping, target-state design'],
+      ['config', 'Onboarding and configuration', 18 + p.entities * 1.2, plural(p.entities, 'fund') + ' or entities to set up'],
+      ['data', 'Data migration and reconciliation', vol + p.entities * 0.8, VOLTXT[p.volume] + ' volume, mock loads, reconciliation sign-off'],
+      ['integ', 'Integrations', p.integrations * 9, plural(p.integrations, 'feed') + ' built, tested and monitored'],
+      ['report', 'Reporting and Power BI', 8 + p.dashboards * 5, 'Standard pack plus ' + plural(p.dashboards, 'custom dashboard')],
+      ['cloud', 'Cloud migration coordination', p.cloud ? 15 : 0, 'Environment readiness, cutover window, rollback plan'],
+      ['sec', 'Security and compliance review', sec, p.security === 'heavy' ? 'Vendor due diligence, test evidence, formal sign-offs' : 'Security questionnaire and access review'],
+      ['uat', 'UAT and release', p.uat * 9, plural(p.uat, 'UAT round') + ', defect triage, release sign-off'],
+      ['golive', 'Cutover and go-live', 8, 'Cutover plan, dress rehearsal, go or no-go']
+    ];
+    var rows = [];
+    for (var i = 0; i < base.length; i++) {
+      if (base[i][2] > 0) rows.push({ k: base[i][0], name: base[i][1], note: base[i][3], pd: Math.round(base[i][2] * mult) });
+    }
+    var sub = sum(rows.map(function (r) { return r.pd; }));
+    var gov = Math.round(sub * 0.10);
+    rows.unshift({ k: 'gov', name: 'Governance and PMO', note: 'Delivery plan, RAID log, steering committees, status reporting', pd: gov });
+    var delivery = sub + gov;
+    var cont = Math.round(delivery * p.cont / 100);
+    var hyperPd = Math.round(p.hyper * 3 * mult);
+    var E = delivery + cont;
+    var total = E + hyperPd;
+    var team = E < 150 ? 4 : E < 300 ? 6 : E < 450 ? 8 : 10;
+    var effDays = 5 * p.alloc / 100;
+    var buf = { high: 0, med: 1, low: 2 }[p.readiness] + (p.security === 'heavy' ? 2 : 0);
+    var weeks = Math.max(4, Math.ceil(E / (team * effDays)) + buf);
+
+    var kick = parseDate(p.kickoff), req = parseDate(p.goLive);
+    var goLive = kick ? addDays(kick, weeks * 7) : null;
+    var hyperEnd = goLive ? addDays(goLive, p.hyper * 7) : null;
+    var reqWeeks = (kick && req) ? Math.floor((req - kick) / (7 * DAY)) : null;
+    var slack = reqWeeks === null ? null : reqWeeks - weeks;
+    var status = 'none';
+    if (reqWeeks !== null) status = reqWeeks <= 0 ? 'bad' : slack >= 2 ? 'good' : slack >= 0 ? 'warn' : 'bad';
+
+    var phases = [
+      { name: 'Mobilise and design', s: 0, e: 0.2 },
+      { name: 'Configure and build', s: 0.12, e: 0.55 },
+      { name: 'Data migration and reconciliation', s: 0.2, e: 0.75 }
+    ];
+    if (p.integrations > 0) phases.push({ name: 'Integrations', s: 0.18, e: 0.7 });
+    phases.push({ name: 'UAT and remediation', s: 0.62, e: 0.92 });
+    phases.push({ name: 'Cutover and go-live', s: 0.92, e: 1 });
+    phases = phases.map(function (ph) {
+      return { name: ph.name, a: Math.floor(ph.s * weeks) + 1, b: Math.max(Math.floor(ph.s * weeks) + 1, Math.ceil(ph.e * weeks)), s: ph.s * weeks, e: ph.e * weeks, hyper: false };
+    });
+    if (p.hyper > 0) phases.push({ name: 'Hypercare', a: weeks + 1, b: weeks + p.hyper, s: weeks, e: weeks + p.hyper, hyper: true });
+
+    return { rows: rows, gov: gov, cont: cont, hyperPd: hyperPd, E: E, total: total, team: team, effDays: effDays, buf: buf,
+      weeks: weeks, kick: kick, req: req, goLive: goLive, hyperEnd: hyperEnd, reqWeeks: reqWeeks, slack: slack, status: status,
+      phases: phases, axis: weeks + p.hyper, mult: mult };
+  }
+
+  function leversFor(p, m) {
+    var out = [];
+    if (m.status !== 'warn' && m.status !== 'bad') return out;
+    var perWeek = m.team * m.effDays;
+    if (m.status === 'bad' && m.reqWeeks > 0) {
+      var avail = m.reqWeeks - m.buf;
+      if (avail > 0) {
+        var need = Math.ceil(m.E / (avail * m.effDays));
+        if (need > m.team) {
+          var big = need > Math.ceil(m.team * 1.5) || need > 12;
+          out.push({ t: 'Add people', d: 'A team of ' + need + ' instead of ' + m.team + ' fits the requested date. ' + (big ? 'That is a large jump, so expect ramp-up drag and treat it as unlikely to work.' : 'Confirm the extra people can start in week 1.') });
+        }
+      } else {
+        out.push({ t: 'Add people', d: 'Adding people will not help. The readiness and review buffers alone use up the weeks available.' });
+      }
+    }
+    var rep = null, uatRow = null;
+    for (var i = 0; i < m.rows.length; i++) { if (m.rows[i].k === 'report') rep = m.rows[i]; if (m.rows[i].k === 'uat') uatRow = m.rows[i]; }
+    var cf = 1 + p.cont / 100;
+    if (rep) {
+      var wk = Math.max(1, Math.round(rep.pd * cf / perWeek));
+      out.push({ t: 'Phase reporting', d: 'Move Reporting and Power BI (' + rep.pd + ' pd) to a second release after go-live. It saves about ' + plural(wk, 'week') + '.' });
+    }
+    if (uatRow && p.uat > 1) {
+      var wu = Math.max(1, Math.round(uatRow.pd * (p.uat - 1) / p.uat * cf / perWeek));
+      out.push({ t: 'Cut a UAT round', d: 'Going to one round saves about ' + plural(wu, 'week') + ' but leaves no time to retest fixes. Only sensible when the data migration is low risk.' });
+    }
+    if (m.goLive) out.push({ t: 'Move the date', d: 'The scoped plan finishes on ' + fmtDate(m.goLive) + '. Propose that date, or a phased go-live with a first release by ' + fmtDate(m.req) + '.' });
+    return out;
+  }
+
+  function risksFor(p, m) {
+    var r = [];
+    function add(sev, title, fix) { r.push({ sev: sev, title: title, fix: fix }); }
+    if (m.status === 'bad') add('bad', 'Requested go-live is earlier than the scoped plan', 'Agree a revised date, a phased scope or added capacity before the SOW is signed.');
+    else if (m.status === 'warn') add('warn', 'Go-live has almost no float', 'Hold the contingency explicitly in the plan and agree a change-control path for anything added after design sign-off.');
+    if (p.readiness === 'low') add('bad', 'Client decisions and SME time are likely to be slow', 'Name a single accountable owner at kick-off, fix a weekly decision slot and log every open client dependency in RAID.');
+    if (p.readiness === 'med') add('warn', 'Client SMEs are shared with business-as-usual work', 'Agree the hours per week each SME will give and escalate the first missed commitment.');
+    if (p.volume === 'high' || p.entities >= 25) add('warn', 'Reconciliation breaks may surface late', 'Agree tolerances and the sign-off owner during design, and run at least two mock migrations before UAT.');
+    if (p.engagement === 'migrate') add('warn', 'Parallel running with the legacy platform doubles reconciliation work', 'Fix the number of parallel cycles in the SOW and name who signs off each one.');
+    if (p.integrations >= 6) add('warn', 'Third-party feeds may not be ready when the build needs them', 'Get test endpoints and file specs from each provider in the first three weeks and track each feed as its own dependency.');
+    if (p.security === 'heavy') add('warn', 'Security review could hold up integration work', 'Submit the architecture pack in week 1 and ask which reviews block the build and which block go-live only.');
+    if (p.cloud) add('warn', 'Cloud environment access and the cutover window may slip', 'Confirm who provisions the target environment and agree the cutover window and rollback plan early.');
+    if (p.uat === 1 && (p.volume !== 'low' || p.integrations >= 4)) add('warn', 'A single UAT round leaves no time to retest fixes', 'Add a short regression window, or agree that defects found after UAT go to a post-go-live fix list.');
+    if (p.dashboards >= 6) add('warn', 'Reporting scope tends to grow after the first demo', 'Specify each dashboard from an existing report and route additions through change control.');
+    if (m.goLive) {
+      var mo = m.goLive.getUTCMonth() + 1, dy = m.goLive.getUTCDate();
+      if ((mo === 3 || mo === 6 || mo === 9 || mo === 12) && dy >= 16) add('warn', 'Go-live lands in a quarter-end close window', 'Check the client\'s close calendar and move cutover to a quieter week.');
+    }
+    if (p.hyper < 2) add('info', 'Hypercare is shorter than the first reporting cycle', 'Extend hypercare to cover the first month-end or quarter-end run.');
+    var ct = {
+      pm: ['Fund-structure complexity needs more custom configuration', 'Collect the three most complex fund structures in discovery (capital calls, waterfalls, side letters) and size them one by one.'],
+      fa: ['Clients onboarded in waves can pull the plan out of sequence', 'Agree the wave order and one onboarding template per client type.'],
+      bk: ['Change-freeze windows and regulatory deadlines can block release dates', 'Get the freeze calendar at kick-off and plan cutover outside it.'],
+      ins: ['Valuation and actuarial data owners often sit outside the sponsor\'s team', 'Name a data owner for each source in the RAID log at kick-off.'],
+      am: ['Several investment teams may expect different reporting', 'Agree one reporting baseline before building custom dashboards.']
+    }[p.clientType];
+    add('info', ct[0], ct[1]);
+    add('warn', 'Scope drifts after design sign-off', 'Baseline requirements at sign-off, log every change request and price it before accepting.');
+    var order = { bad: 0, warn: 1, info: 2 };
+    r.sort(function (a, b) { return order[a.sev] - order[b.sev]; });
+    return r;
+  }
+
+  function assumptionsFor(p, m) {
+    var a = [];
+    a.push('Kick-off on ' + fmtDate(m.kick) + '. Plan is in calendar weeks; public holidays and client freeze periods are not modelled.');
+    a.push('Team of ' + m.team + ' at an average ' + p.alloc + '% allocation. One person-day is 8 hours.');
+    a.push('The client names one accountable owner and releases SMEs for the workshops, UAT and sign-offs in the plan.');
+    a.push('Source data arrives in the agreed format, with ' + (p.volume === 'high' ? 'three' : 'two') + ' mock loads before UAT.');
+    if (p.integrations > 0) a.push(plural(p.integrations, 'integration') + ' use standard file or API formats, and test endpoints are available by week 4.');
+    a.push(plural(p.uat, 'UAT round') + ' of about one week each, with defect fixes turned around within two working days.');
+    if (p.dashboards > 0) a.push('Reporting is limited to ' + plural(p.dashboards, 'custom dashboard') + ' on the standard data model. Further requests go through change control.');
+    if (p.cloud) a.push('The client provides the target cloud environment and access by week 3.');
+    a.push(p.cont + '% contingency is held against delivery effort. Hypercare effort sits outside it.');
+    return a;
+  }
+
+  function questionsFor(p, m) {
+    var q = [];
+    q.push('Is the go-live date tied to an external event such as a fund close, an audit or a contract end?');
+    q.push('Who signs off data reconciliation, and what difference counts as a match?');
+    if (p.integrations > 0) q.push('Which of the ' + p.integrations + ' integrations already have test endpoints, and who owns each one on the client side?');
+    if (p.engagement === 'migrate') q.push('Is a parallel run with the legacy platform required, and for how many cycles?');
+    if (p.security !== 'none') q.push('Which security reviews must finish before the build starts?');
+    if (p.cloud) q.push('Who provides the target cloud environment, and by when?');
+    if (p.dashboards > 0) q.push('Can the ' + p.dashboards + ' dashboards be specified from existing reports, or does that still need discovery?');
+    return q.slice(0, 6);
+  }
+  // MODEL-END
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function num(id, lo, hi, dflt) {
+    var v = parseFloat($(id).value);
+    if (isNaN(v)) v = dflt;
+    return Math.min(hi, Math.max(lo, Math.round(v)));
+  }
+  function radio(name) { var e = document.querySelector('input[name="' + name + '"]:checked'); return e ? e.value : null; }
+
+  function readForm() {
+    return {
+      clientType: $('clientType').value, engagement: $('engagement').value,
+      kickoff: $('kickoff').value, goLive: $('goLive').value,
+      entities: num('entities', 1, 300, 1), integrations: num('integrations', 0, 25, 0),
+      volume: radio('volume') || 'med', dashboards: num('dashboards', 0, 20, 0),
+      uat: num('uat', 1, 3, 2), security: $('security').value, hyper: num('hyper', 0, 12, 0),
+      cloud: $('cloud').checked, readiness: radio('readiness') || 'med',
+      alloc: num('alloc', 30, 100, 60), cont: num('cont', 0, 40, 15)
+    };
+  }
+  function setForm(p) {
+    $('clientType').value = p.clientType; $('engagement').value = p.engagement;
+    $('entities').value = p.entities; $('integrations').value = p.integrations;
+    $('vol-' + p.volume).checked = true; $('dashboards').value = p.dashboards;
+    $('uat').value = String(p.uat); $('security').value = p.security; $('hyper').value = p.hyper;
+    $('cloud').checked = !!p.cloud; $('rdy-' + p.readiness).checked = true;
+  }
+
+  var cur = null, aiData = null, undoForm = null;
+
+  function render() {
+    var p = readForm(), m = compute(p);
+    cur = { p: p, m: m, risks: risksFor(p, m), levers: leversFor(p, m), assumptions: assumptionsFor(p, m), questions: questionsFor(p, m) };
+
+    // verdict
+    var v = $('verdict');
+    v.className = 'verdict ' + m.status;
+    var label = { good: 'Achievable', warn: 'Tight', bad: 'Not achievable as scoped', none: 'No requested date' }[m.status];
+    var line;
+    if (m.status === 'none') line = 'Enter kick-off and requested go-live dates to compare them with the plan.';
+    else if (m.reqWeeks <= 0) line = 'The requested date is on or before kick-off.';
+    else if (m.slack >= 0) line = 'Client asked for ' + fmtDate(m.req) + '. That leaves ' + plural(m.slack, 'week') + ' of float.';
+    else line = 'Client asked for ' + fmtDate(m.req) + '. The plan needs ' + plural(-m.slack, 'more week') + '.';
+    var gl = m.goLive ? fmtDate(m.goLive) : plural(m.weeks, 'week');
+    var sub = m.goLive
+      ? plural(m.weeks, 'week') + ' from kick-off on ' + fmtDate(m.kick) + (p.hyper ? ', then ' + plural(p.hyper, 'week') + ' of hypercare to ' + fmtDate(m.hyperEnd) + '.' : '.')
+      : 'Set a kick-off date to see calendar dates.';
+    v.innerHTML =
+      '<div class="v-top"><div><p class="v-label">Scoped go-live</p><p class="v-date">' + esc(gl) + '</p><p class="v-sub">' + esc(sub) + '</p></div>' +
+      '<div class="v-status"><span class="pill ' + (m.status === 'none' ? 'info' : m.status) + '">' + label + '</span><p>' + esc(line) + '</p></div></div>' +
+      '<dl class="facts"><div><dt>Total effort</dt><dd>' + m.total + ' <small>pd</small></dd></div>' +
+      '<div><dt>Team</dt><dd>' + m.team + ' <small>people</small></dd></div>' +
+      '<div><dt>Delivery</dt><dd>' + m.weeks + ' <small>weeks</small></dd></div>' +
+      '<div><dt>Contingency</dt><dd>' + m.cont + ' <small>pd</small></dd></div></dl>';
+
+    // gantt
+    var g = $('gantt');
+    var pct = function (w) { return (Math.max(0, w) / m.axis * 100).toFixed(2) + '%'; };
+    g.style.setProperty('--gl', pct(m.weeks));
+    g.style.setProperty('--req', m.reqWeeks !== null && m.reqWeeks > 0 && m.reqWeeks <= m.axis ? pct(m.reqWeeks) : '-10%');
+    g.style.setProperty('--st-line', { good: 'var(--good)', warn: 'var(--warn)', bad: 'var(--bad)', none: 'var(--muted)' }[m.status]);
+    var step = m.axis <= 12 ? 1 : m.axis <= 24 ? 2 : m.axis <= 40 ? 4 : 5, ticks = '';
+    for (var t = 0; t <= m.axis; t += step) ticks += '<span style="left:' + pct(t) + '">' + t + '</span>';
+    var html = '<div class="g-row axis"><span class="g-label"></span><div class="g-axis" aria-hidden="true">' + ticks + '</div></div>';
+    for (var i = 0; i < m.phases.length; i++) {
+      var ph = m.phases[i];
+      html += '<div class="g-row"><span class="g-label">' + esc(ph.name) + '<small>Wk ' + ph.a + (ph.b > ph.a ? '-' + ph.b : '') + '</small></span>' +
+        '<div class="g-track"><span class="g-bar' + (ph.hyper ? ' hyper' : '') + '" style="left:' + pct(ph.s) + ';width:' + ((ph.e - ph.s) / m.axis * 100).toFixed(2) + '%"></span></div></div>';
+    }
+    g.innerHTML = html;
+    $('tl-hint').textContent = 'weeks from kick-off';
+
+    // levers
+    $('levers-p').hidden = cur.levers.length === 0;
+    $('levers-h').textContent = m.status === 'bad' ? 'Ways to close the gap' : 'Ways to build float';
+    $('levers').innerHTML = cur.levers.map(function (l) { return '<div class="lever"><span class="tag">' + esc(l.t) + '</span><p style="margin:0;color:var(--ink);font-size:.92rem">' + esc(l.d) + '</p></div>'; }).join('');
+
+    // workstreams
+    var max = 0, k;
+    for (k = 0; k < m.rows.length; k++) max = Math.max(max, m.rows[k].pd);
+    var ws = m.rows.map(function (r) {
+      return '<div class="ws-row"><span class="ws-name">' + esc(r.name) + '</span><span class="ws-pd">' + r.pd + '</span><span class="ws-note">' + esc(r.note) + '</span>' +
+        '<span class="ws-bar"><i style="width:' + (r.pd / max * 100).toFixed(1) + '%"></i></span></div>';
+    }).join('');
+    ws += '<div class="ws-row minor"><span class="ws-name">Contingency (' + p.cont + '%)</span><span class="ws-pd">' + m.cont + '</span><span class="ws-note">Held against delivery effort</span></div>';
+    if (p.hyper > 0) ws += '<div class="ws-row minor"><span class="ws-name">Hypercare</span><span class="ws-pd">' + m.hyperPd + '</span><span class="ws-note">' + plural(p.hyper, 'week') + ' of post-go-live support</span></div>';
+    ws += '<div class="ws-row sum minor"><span class="ws-name">Total</span><span class="ws-pd">' + m.total + '</span><span class="ws-note">' + m.E + ' pd delivery plus ' + m.hyperPd + ' pd hypercare</span></div>';
+    $('ws').innerHTML = ws;
+
+    // risks, assumptions, questions
+    var sevLabel = { bad: 'High', warn: 'Medium', info: 'Watch' };
+    $('risks').innerHTML = cur.risks.map(function (r) {
+      return '<div class="risk"><span class="pill ' + r.sev + '">' + sevLabel[r.sev] + '</span><div><h3>' + esc(r.title) + '</h3><p>' + esc(r.fix) + '</p></div></div>';
+    }).join('');
+    $('assump').innerHTML = cur.assumptions.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+    $('questions').innerHTML = cur.questions.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+  }
+
+  // copy summary
+  function summaryText() {
+    var p = cur.p, m = cur.m, L = [];
+    L.push('# Scoping summary: ' + CLIENTS[p.clientType].label + ', ' + ENG[p.engagement].label.toLowerCase());
+    L.push('');
+    L.push('- Kick-off: ' + fmtDate(m.kick) + '; requested go-live: ' + fmtDate(m.req));
+    L.push('- Scoped go-live: ' + (m.goLive ? fmtDate(m.goLive) : 'not set') + ' (' + plural(m.weeks, 'week') + ' delivery, ' + plural(p.hyper, 'week') + ' hypercare)');
+    L.push('- Effort: ' + m.total + ' person-days including ' + m.cont + ' contingency; team of ' + m.team + ' at ' + p.alloc + '% allocation');
+    L.push('- Fit against requested date: ' + { good: 'achievable', warn: 'tight', bad: 'not achievable as scoped', none: 'no requested date' }[m.status]);
+    L.push('- Drivers: ' + plural(p.entities, 'fund') + ', ' + plural(p.integrations, 'integration') + ', ' + VOLTXT[p.volume].toLowerCase() + ' migration volume, ' + plural(p.dashboards, 'dashboard') + ', ' + plural(p.uat, 'UAT round') + ', ' + p.security + ' security review' + (p.cloud ? ', cloud migration' : '') + ', client readiness ' + READY[p.readiness].label.toLowerCase());
+    L.push('');
+    L.push('## Effort by workstream (person-days)');
+    m.rows.forEach(function (r) { L.push('- ' + r.name + ': ' + r.pd); });
+    L.push('- Contingency: ' + m.cont);
+    if (p.hyper > 0) L.push('- Hypercare: ' + m.hyperPd);
+    L.push('- Total: ' + m.total);
+    L.push('');
+    L.push('## Timeline (weeks from kick-off)');
+    m.phases.forEach(function (ph) { L.push('- ' + ph.name + ': weeks ' + ph.a + (ph.b > ph.a ? ' to ' + ph.b : '')); });
+    if (cur.levers.length) { L.push(''); L.push('## Options for the requested date'); cur.levers.forEach(function (l) { L.push('- ' + l.t + ': ' + l.d); }); }
+    L.push(''); L.push('## Risks');
+    cur.risks.forEach(function (r) { L.push('- [' + { bad: 'High', warn: 'Medium', info: 'Watch' }[r.sev] + '] ' + r.title + '. Mitigation: ' + r.fix); });
+    L.push(''); L.push('## Assumptions');
+    cur.assumptions.forEach(function (x) { L.push('- ' + x); });
+    L.push(''); L.push('## Questions for the client');
+    cur.questions.forEach(function (x) { L.push('- ' + x); });
+    if (aiData) {
+      L.push(''); L.push('## From the requirements notes (Claude)');
+      (aiData.risks || []).forEach(function (r) { L.push('- Risk: ' + r.title + '. Mitigation: ' + r.mitigation); });
+      (aiData.assumptions || []).forEach(function (x) { L.push('- Assumption: ' + x); });
+      (aiData.questions || []).forEach(function (x) { L.push('- Question: ' + x); });
+    }
+    return L.join('\n');
+  }
+  $('copyBtn').addEventListener('click', function () {
+    var t = summaryText(), box = $('srcbox'), msg = $('copyMsg');
+    function fallback() { box.hidden = false; box.value = t; box.focus(); box.select(); msg.textContent = 'Copy blocked here. The text is selected below, so press copy on your keyboard.'; }
+    try {
+      navigator.clipboard.writeText(t).then(function () { box.hidden = true; msg.textContent = 'Summary copied.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+
+  // Claude analysis
+  var LABELS = { clientType: 'Client type', engagement: 'Engagement type', entities: 'Funds or entities', integrations: 'Integrations', volume: 'Migration volume', dashboards: 'Custom dashboards', cloud: 'Cloud migration', security: 'Security review', uat: 'UAT rounds', readiness: 'Client readiness', hyper: 'Hypercare weeks' };
+  var KEYMAP = { clientType: 'clientType', engagement: 'engagement', entities: 'entities', integrations: 'integrations', volume: 'volume', dashboards: 'dashboards', cloud: 'cloud', security: 'security', uatRounds: 'uat', readiness: 'readiness', hypercareWeeks: 'hyper' };
+  function validValue(key, v) {
+    switch (key) {
+      case 'clientType': return typeof v === 'string' && CLIENTS[v] ? v : null;
+      case 'engagement': return typeof v === 'string' && ENG[v] ? v : null;
+      case 'volume': return ['low', 'med', 'high'].indexOf(v) >= 0 ? v : null;
+      case 'security': return ['none', 'std', 'heavy'].indexOf(v) >= 0 ? v : null;
+      case 'readiness': return ['high', 'med', 'low'].indexOf(v) >= 0 ? v : null;
+      case 'cloud': return typeof v === 'boolean' ? v : null;
+      case 'uat': v = Math.round(Number(v)); return v >= 1 && v <= 3 ? v : null;
+      case 'entities': v = Math.round(Number(v)); return v >= 1 && v <= 300 ? v : null;
+      case 'integrations': v = Math.round(Number(v)); return v >= 0 && v <= 25 ? v : null;
+      case 'dashboards': v = Math.round(Number(v)); return v >= 0 && v <= 20 ? v : null;
+      case 'hyper': v = Math.round(Number(v)); return v >= 0 && v <= 12 ? v : null;
+    }
+    return null;
+  }
+  function showVal(key, v) {
+    if (key === 'clientType') return CLIENTS[v].label;
+    if (key === 'engagement') return ENG[v].label;
+    if (key === 'volume') return VOLTXT[v];
+    if (key === 'readiness') return READY[v].label;
+    if (key === 'security') return { none: 'None', std: 'Standard', heavy: 'Heavy' }[v];
+    if (key === 'cloud') return v ? 'Yes' : 'No';
+    return String(v);
+  }
+  function list(arr) { return (arr || []).slice(0, 5).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''); }
+
+  function renderAi(applied) {
+    var box = $('ai-out');
+    if (!aiData) { box.hidden = true; box.innerHTML = ''; return; }
+    var h = '<div class="panel-head"><h2>What Claude read in the requirements</h2><span class="pill info">Claude</span></div>';
+    if (applied.length) {
+      h += '<div><p class="note">Applied to the form. Check each against the source text.</p><ul class="bul" style="margin-top:8px">' +
+        applied.map(function (a) { return '<li><strong>' + esc(a.label) + ': ' + esc(a.shown) + '.</strong> <span class="ev">' + esc(a.why) + '</span></li>'; }).join('') + '</ul>' +
+        '<div class="btn-row" style="margin-top:12px"><button class="btn ghost" type="button" id="undoBtn">Revert form values</button></div></div>';
+    } else h += '<p class="note">The text did not support any change to the drivers, so the form is unchanged.</p>';
+    if ((aiData.risks || []).length) {
+      var sev = { high: 'bad', medium: 'warn', low: 'info' }, lab = { high: 'High', medium: 'Medium', low: 'Watch' };
+      h += '<div><h2 style="margin-bottom:10px">Risks specific to this text</h2>' + aiData.risks.slice(0, 5).map(function (r) {
+        var s = sev[r.severity] ? r.severity : 'medium';
+        return '<div class="risk"><span class="pill ' + sev[s] + '">' + lab[s] + '</span><div><h3>' + esc(r.title) + '</h3><p>' + esc(r.mitigation) + '</p></div></div>';
+      }).join('') + '</div>';
+    }
+    h += '<div class="two"><div><h2 style="margin-bottom:10px">Assumptions it suggests</h2><ul class="bul">' + list(aiData.assumptions) + '</ul></div>' +
+      '<div><h2 style="margin-bottom:10px">Questions it suggests</h2><ul class="bul">' + list(aiData.questions) + '</ul></div></div>';
+    box.innerHTML = h; box.hidden = false;
+    var u = $('undoBtn');
+    if (u) u.addEventListener('click', function () { if (undoForm) { setForm(undoForm); render(); u.disabled = true; u.textContent = 'Reverted'; } });
+  }
+
+  var sampleFn = null, ctl = null;
+  var AI_MSG = { not_granted: 'Claude access was not allowed for this page. Allow it in the page permissions to use this feature.', sampling_disabled: 'Claude is not available for this account.', rate_limited: 'Too many requests or your usage limit was reached. Try again later.', session_expired: 'Your session expired. Sign in again.', invalid_json: 'Claude replied in a format the page could not read. Try again, or shorten the text.', refused: 'Claude declined to read that text.', empty_completion: 'Claude returned nothing. Try again with more detail.', upstream_error: 'The request was interrupted. Try again.', prompt_too_large: 'That text is too long. Paste a shorter excerpt.' };
+
+  function runAi() {
+    var text = $('notes').value.trim();
+    var st = $('aiStatus');
+    if (!text) { st.className = 'err'; st.textContent = 'Paste the client requirements first.'; return; }
+    var prompt =
+      'You are helping a presales manager at a financial services technology firm size an implementation. Read the client requirements below and reply with only one JSON object.\n\n' +
+      'Schema:\n{"inputs":{"clientType":"pm|am|fa|bk|ins","engagement":"new|migrate|addon","entities":number,"integrations":number,"volume":"low|med|high","dashboards":number,"cloud":boolean,"security":"none|std|heavy","uatRounds":1|2|3,"readiness":"high|med|low","hypercareWeeks":number},' +
+      '"evidence":{"<inputs key>":"one short sentence tying the value to the text"},' +
+      '"risks":[{"title":"...","severity":"high|medium|low","mitigation":"..."}],"assumptions":["..."],"questions":["..."]}\n\n' +
+      'Key meanings: pm private markets manager, am asset manager, fa fund administrator, bk bank or custodian, ins insurer or pension fund. entities is the number of funds or legal entities. volume is the size of the data migration. security is the depth of client security review. readiness is how quickly the client decides and releases SMEs.\n' +
+      'Rules: put a key in "inputs" only when the text supports it, and omit every other key. Never guess a number the text does not give. Every key you include needs an entry in "evidence". Give at most 5 risks, 5 assumptions and 5 questions, each under 25 words and specific to this text, not generic.\n\n' +
+      'Current form values for reference: ' + JSON.stringify(cur.p) + '\n\nClient requirements:\n"""\n' + text.slice(0, 12000) + '\n"""';
+    ctl = new AbortController();
+    $('aiGo').disabled = true; $('aiStop').hidden = false;
+    st.className = 'note'; st.textContent = 'Thinking. This can take up to a minute.';
+    sampleFn.json(prompt, { signal: ctl.signal }).then(function (res) {
+      if (!res || typeof res !== 'object') throw { code: 'invalid_json' };
+      aiData = { risks: Array.isArray(res.risks) ? res.risks.filter(function (r) { return r && r.title; }).map(function (r) { return { title: String(r.title), severity: String(r.severity || 'medium'), mitigation: String(r.mitigation || '') }; }) : [],
+        assumptions: Array.isArray(res.assumptions) ? res.assumptions.map(String) : [], questions: Array.isArray(res.questions) ? res.questions.map(String) : [] };
+      var before = readForm(), applied = [], inp = res.inputs && typeof res.inputs === 'object' ? res.inputs : {}, ev = res.evidence && typeof res.evidence === 'object' ? res.evidence : {};
+      var next = JSON.parse(JSON.stringify(before));
+      Object.keys(KEYMAP).forEach(function (k) {
+        if (!(k in inp)) return;
+        var key = KEYMAP[k], v = validValue(key, inp[k]);
+        if (v === null || v === next[key]) return;
+        next[key] = v;
+        applied.push({ label: LABELS[key], shown: showVal(key, v), why: String(ev[k] || ev[key] || 'Stated in the text.') });
+      });
+      undoForm = before;
+      setForm(next); render(); renderAi(applied);
+      st.className = 'note'; st.textContent = 'Done. Results below are updated.';
+    }).catch(function (e) {
+      if (e && e.code === 'cancelled') { st.className = 'note'; st.textContent = 'Stopped.'; }
+      else { st.className = 'err'; st.textContent = AI_MSG[e && e.code] || 'Something went wrong. Try again.'; }
+    }).then(function () { $('aiGo').disabled = false; $('aiStop').hidden = true; ctl = null; });
+  }
+
+  $('form').addEventListener('input', render);
+  $('form').addEventListener('change', render);
+  $('aiGo').addEventListener('click', runAi);
+  $('aiStop').addEventListener('click', function () { if (ctl) ctl.abort(); });
+  render();
+
+  if (window.claude && window.claude.use) {
+    window.claude.use('sample').then(function (s) { if (s && typeof s.json === 'function') { sampleFn = s; $('ai-in').hidden = false; } }, function () {});
+  }
+})();
+</script>
+</body>
+</html>
